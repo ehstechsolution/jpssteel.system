@@ -176,7 +176,7 @@ export const InventoryMovements: React.FC = () => {
                 <label className="text-sm font-semibold text-slate-700">Categoria</label>
                 <input 
                   required 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                   placeholder="Ex: Materiais, Salários, Adiantamento..."
                   value={formData.category}
                   onChange={e => setFormData({...formData, category: e.target.value})}
@@ -187,7 +187,7 @@ export const InventoryMovements: React.FC = () => {
                 <label className="text-sm font-semibold text-slate-700">Descrição Detalhada</label>
                 <input 
                   required 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                   placeholder="Ex: Pagamento referente a chapas de aço 2mm"
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
@@ -201,7 +201,7 @@ export const InventoryMovements: React.FC = () => {
                     type="number" 
                     required 
                     step="0.01"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-bold"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-slate-900"
                     value={formData.value}
                     onChange={e => setFormData({...formData, value: Number(e.target.value)})}
                   />
@@ -209,7 +209,7 @@ export const InventoryMovements: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-slate-700">Status</label>
                   <select 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                     value={formData.status}
                     onChange={e => setFormData({...formData, status: e.target.value as 'Confirmado' | 'Pendente'})}
                   >

@@ -27,7 +27,7 @@ export const Services: React.FC = () => {
     const unsubServices = onSnapshot(collection(db, 'services'), (snap) => {
       setServices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
     });
-    const unsubClients = onSnapshot(collection(db, 'clients'), (snap) => {
+    const unsubClients = onSnapshot(collection(db, 'cliente'), (snap) => {
       setClients(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
     });
     return () => { unsubServices(); unsubClients(); };
@@ -38,7 +38,7 @@ export const Services: React.FC = () => {
     const client = clients.find(c => c.id === formData.clientId);
     const data = {
       ...formData,
-      clientName: client?.name || 'Cliente Desconhecido',
+      clientName: client?.displayName || 'Cliente Desconhecido',
       totalValue: Number(formData.totalValue),
       updatedAt: serverTimestamp()
     };
@@ -155,14 +155,12 @@ export const Services: React.FC = () => {
 
         {services.length === 0 && (
           <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-            {/* Added Wrench import from lucide-react to fix missing name error */}
             <Wrench size={48} className="mb-4 opacity-20" />
             <p>Nenhum serviço registrado ainda.</p>
           </div>
         )}
       </div>
 
-      {/* Modal Add/Edit */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
@@ -179,12 +177,12 @@ export const Services: React.FC = () => {
                 <label className="text-sm font-semibold text-slate-700">Selecione o Cliente</label>
                 <select 
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                   value={formData.clientId}
                   onChange={e => setFormData({...formData, clientId: e.target.value})}
                 >
                   <option value="">Escolha um cliente...</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.displayName}</option>)}
                 </select>
               </div>
 
@@ -192,7 +190,7 @@ export const Services: React.FC = () => {
                 <label className="text-sm font-semibold text-slate-700">Descrição do Serviço</label>
                 <input 
                   required 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                   placeholder="Ex: Montagem de estrutura metálica Galpão A"
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
@@ -205,7 +203,7 @@ export const Services: React.FC = () => {
                   <input 
                     type="date" 
                     required 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                     value={formData.startDate}
                     onChange={e => setFormData({...formData, startDate: e.target.value})}
                   />
@@ -215,7 +213,7 @@ export const Services: React.FC = () => {
                   <input 
                     type="date" 
                     required 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                     value={formData.endDate}
                     onChange={e => setFormData({...formData, endDate: e.target.value})}
                   />
@@ -226,7 +224,7 @@ export const Services: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-slate-700">Status</label>
                   <select 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                     value={formData.status}
                     onChange={e => setFormData({...formData, status: e.target.value as Service['status']})}
                   >
@@ -242,7 +240,7 @@ export const Services: React.FC = () => {
                     type="number" 
                     required 
                     step="0.01"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-bold"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-slate-900"
                     placeholder="0,00"
                     value={formData.totalValue}
                     onChange={e => setFormData({...formData, totalValue: Number(e.target.value)})}

@@ -21,6 +21,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const APP_LOGO = "https://i.ibb.co/PZDD4Dfh/logo.png";
 
   const navItems = [
     { id: Page.Dashboard, label: 'Dashboard', icon: LayoutDashboard },
@@ -36,11 +37,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col w-72 bg-slate-900 text-white sticky top-0 h-screen shadow-2xl z-40">
         <div className="p-8 flex flex-col items-center">
-          <img src="https://i.ibb.co/PZDD4Dfh/logo.png" alt="JPS Steel Logo" className="w-40 mb-2 drop-shadow-lg" />
-          <h1 className="text-sm font-bold tracking-widest text-blue-400 uppercase mt-2">Steel Management</h1>
+          <div className="w-full flex justify-center bg-white/5 p-4 rounded-2xl border border-white/10 mb-4">
+            <img src={APP_LOGO} alt="JPS Steel Logo" className="w-auto h-16 object-contain" />
+          </div>
+          <h1 className="text-xs font-bold tracking-[0.2em] text-blue-400 uppercase">JPS Steel</h1>
+          <p className="text-[10px] text-slate-500 font-medium">Montagens Industriais</p>
         </div>
         
-        <nav className="flex-1 mt-6 px-4 space-y-2">
+        <nav className="flex-1 mt-2 px-4 space-y-2">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -48,32 +52,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activePage === item.id 
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
               }`}
             >
               <item.icon size={20} className={activePage === item.id ? 'text-white' : 'group-hover:text-blue-400 transition-colors'} />
-              <span className="font-medium">{item.label}</span>
+              <span className="font-medium text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-6 border-t border-slate-800">
-          <p className="text-xs text-slate-500 text-center">© 2024 JPS Steel<br/>Versão 2.4.0</p>
+        <div className="p-6 border-t border-white/5">
+          <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest">© 2024 JPS Steel</p>
         </div>
       </aside>
 
-      {/* Mobile Menu Backdrop */}
-      {isMobileMenuOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
       {/* Mobile Sidebar */}
       <aside className={`lg:hidden fixed top-0 bottom-0 left-0 w-72 bg-slate-900 text-white z-50 transform transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 flex justify-between items-center">
-          <img src="https://i.ibb.co/PZDD4Dfh/logo.png" alt="JPS Steel Logo" className="w-32" />
+        <div className="p-6 flex justify-between items-center border-b border-white/5">
+          <img src={APP_LOGO} alt="JPS Steel Logo" className="h-10" />
           <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white">
             <X size={24} />
           </button>
@@ -91,7 +87,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
               }`}
             >
               <item.icon size={20} />
-              <span>{item.label}</span>
+              <span className="text-sm font-medium">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -99,20 +95,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
         <header className="h-16 lg:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center lg:hidden">
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-slate-600">
               <Menu size={24} />
             </button>
-            <span className="ml-4 font-bold text-slate-800">JPS Steel</span>
+            <img src={APP_LOGO} alt="JPS Steel" className="h-8 ml-2" />
           </div>
           
           <div className="hidden lg:block">
-            <h2 className="text-xl font-bold text-slate-800 capitalize">
+            <h2 className="text-lg font-bold text-slate-800 capitalize">
               {navItems.find(i => i.id === activePage)?.label}
             </h2>
-            <p className="text-xs text-slate-500">Gestão de Montagens Industriais</p>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -121,19 +115,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
             <div className="flex items-center space-x-3 pl-4 border-l border-slate-200">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-slate-800">Administrador</p>
-                <p className="text-xs text-green-600 font-medium">Online</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold border-2 border-blue-200">
-                JD
+              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                AD
               </div>
             </div>
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="p-4 lg:p-8 overflow-y-auto max-h-[calc(100vh-5rem)]">
+        <div className="p-4 lg:p-8 overflow-y-auto max-h-[calc(100vh-4rem)] lg:max-h-[calc(100vh-5rem)]">
           {children}
         </div>
       </main>

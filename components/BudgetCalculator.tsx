@@ -16,7 +16,7 @@ export const BudgetCalculator: React.FC = () => {
   const [tax, setTax] = useState(0);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'clients'), (snap) => {
+    const unsub = onSnapshot(collection(db, 'cliente'), (snap) => {
       setClients(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
     });
     return () => unsub();
@@ -83,7 +83,6 @@ export const BudgetCalculator: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Editor do Orçamento */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div className="flex items-center space-x-2 mb-4 text-blue-600">
@@ -91,12 +90,12 @@ export const BudgetCalculator: React.FC = () => {
               <h3 className="font-bold">Informações do Cliente</h3>
             </div>
             <select 
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
               value={selectedClientId}
               onChange={e => setSelectedClientId(e.target.value)}
             >
               <option value="">Selecione um cliente cadastrado...</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.cnpj})</option>)}
+              {clients.map(c => <option key={c.id} value={c.id}>{c.displayName} ({c.cnpj})</option>)}
             </select>
           </div>
 
@@ -129,7 +128,7 @@ export const BudgetCalculator: React.FC = () => {
                         <input 
                           type="text"
                           placeholder="Mão de obra, Material, Frete..."
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                           value={item.description}
                           onChange={e => updateItem(item.id, 'description', e.target.value)}
                         />
@@ -138,7 +137,7 @@ export const BudgetCalculator: React.FC = () => {
                         <label className="text-[10px] uppercase font-bold text-slate-400">Qtd</label>
                         <input 
                           type="number"
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
                           value={item.quantity}
                           onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))}
                         />
@@ -147,7 +146,7 @@ export const BudgetCalculator: React.FC = () => {
                         <label className="text-[10px] uppercase font-bold text-slate-400">Unitário (R$)</label>
                         <input 
                           type="number"
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-slate-900"
                           value={item.unitPrice}
                           onChange={e => updateItem(item.id, 'unitPrice', Number(e.target.value))}
                         />
@@ -168,7 +167,6 @@ export const BudgetCalculator: React.FC = () => {
           </div>
         </div>
 
-        {/* Resumo e Cálculo */}
         <div className="space-y-6">
           <div className="bg-slate-900 text-white rounded-2xl shadow-xl overflow-hidden p-6 relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>

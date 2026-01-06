@@ -1,12 +1,20 @@
 
 export interface Client {
   id: string;
-  name: string;
+  displayName: string;
   cnpj: string;
+  fotoUrl: string;
+  endereco: string;
+  createdAt?: any;
+}
+
+export interface Representative {
+  id: string;
+  representanteName: string;
+  telefone: string;
   email: string;
-  phone: string;
-  address: string;
-  createdAt: any;
+  setor: 'Comercial' | 'Operacional' | 'Logística' | 'Fiscal' | 'Outros';
+  createdAt?: any;
 }
 
 export interface Service {
