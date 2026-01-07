@@ -36,18 +36,19 @@ export interface Service {
   paymentStatus: 'Aberto' | 'Pago' | 'Atrasado';
 }
 
-// Fix: Added missing Movement interface referenced in Dashboard and InventoryMovements components
 export interface Movement {
   id: string;
-  type: 'Entrada' | 'Saída';
-  category: string;
-  description: string;
-  value: number;
-  status: 'Confirmado' | 'Pendente';
-  date: string;
+  tipo: 'Entrada' | 'Saída';
+  categoria: string;
+  descricao: string;
+  valor: number;
+  status: 'Pendente' | 'Cancelado' | 'Consolidado' | 'Arquivado';
+  vencimento: string;
+  observacao: string;
+  idRelacionado: string;
+  createdAt?: any;
 }
 
-// Fix: Changed Page from interface to enum to allow it to be used as both a type and a value in App.tsx and Layout.tsx
 export enum Page {
   Dashboard = 'dashboard',
   Clients = 'clients',
