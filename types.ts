@@ -24,6 +24,11 @@ export interface DefaultValues {
   valorHoraPadrao: number;
 }
 
+export interface NotificationSettings {
+  diasMovimentacao: number;
+  alertMovimentacao: boolean;
+}
+
 export interface Service {
   id: string;
   clientId: string;
