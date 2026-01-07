@@ -17,6 +17,13 @@ export interface Representative {
   createdAt?: any;
 }
 
+export interface DefaultValues {
+  gasolina: number;
+  pedagio: number;
+  alimentacao: number;
+  valorHoraPadrao: number;
+}
+
 export interface Service {
   id: string;
   clientId: string;
@@ -29,37 +36,18 @@ export interface Service {
   paymentStatus: 'Aberto' | 'Pago' | 'Atrasado';
 }
 
-export interface Budget {
-  id: string;
-  clientId: string;
-  clientName: string;
-  items: BudgetItem[];
-  tax: number;
-  discount: number;
-  subtotal: number;
-  total: number;
-  validUntil: string;
-  date: string;
-}
-
-export interface BudgetItem {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-}
-
+// Fix: Added missing Movement interface referenced in Dashboard and InventoryMovements components
 export interface Movement {
   id: string;
   type: 'Entrada' | 'Saída';
   category: string;
   description: string;
   value: number;
-  date: string;
   status: 'Confirmado' | 'Pendente';
+  date: string;
 }
 
+// Fix: Changed Page from interface to enum to allow it to be used as both a type and a value in App.tsx and Layout.tsx
 export enum Page {
   Dashboard = 'dashboard',
   Clients = 'clients',

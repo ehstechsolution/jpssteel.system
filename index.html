@@ -31,6 +31,17 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
       }
+
+      @media print {
+        @page {
+          margin: 0;
+          size: auto;
+        }
+        body {
+          background-color: white !important;
+          -webkit-print-color-adjust: exact;
+        }
+      }
     </style>
   <script type="importmap">
 {
@@ -49,7 +60,6 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- Ponto de entrada explícito para o Vite/Vercel -->
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
