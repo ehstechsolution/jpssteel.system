@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Building2, MapPin, FileText, Briefcase, 
   UserPlus, Phone, Mail, Users, Trash2, Calendar, Eye, X, 
-  MapPin as MapPinIcon, Phone as PhoneIcon, Globe as GlobeIcon, FileDown
+  MapPin as MapPinIcon, Phone as PhoneIcon, Globe as GlobeIcon, FileDown,
+  Edit2
 } from 'lucide-react';
 import { 
   collection, addDoc, onSnapshot, query, orderBy, 
-  serverTimestamp, deleteDoc, doc, where 
+  serverTimestamp, deleteDoc, doc, where, updateDoc 
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Client, Representative } from '../types';
@@ -23,6 +24,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
   const [representatives, setRepresentatives] = useState<Representative[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [isRepFormOpen, setIsRepFormOpen] = useState(false);
+  const [editingRepresentative, setEditingRepresentative] = useState<Representative | null>(null);
   const [selectedBudget, setSelectedBudget] = useState<any | null>(null);
   
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -62,14 +64,31 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
     };
   }, [client.id]);
 
-  const handleAddRepresentative = async (data: Omit<Representative, 'id'>) => {
+  const handleOpenNewRep = () => {
+    setEditingRepresentative(null);
+    setIsRepFormOpen(true);
+  };
+
+  const handleEditRep = (rep: Representative) => {
+    setEditingRepresentative(rep);
+    setIsRepFormOpen(true);
+  };
+
+  const handleRepresentativeSubmit = async (data: Omit<Representative, 'id'>) => {
     try {
-      await addDoc(collection(db, 'cliente', client.id, 'representantes'), {
-        ...data,
-        createdAt: serverTimestamp()
-      });
+      if (editingRepresentative) {
+        await updateDoc(doc(db, 'cliente', client.id, 'representantes', editingRepresentative.id), {
+          ...data,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        await addDoc(collection(db, 'cliente', client.id, 'representantes'), {
+          ...data,
+          createdAt: serverTimestamp()
+        });
+      }
     } catch (err) {
-      console.error("Erro ao adicionar representante:", err);
+      console.error("Erro ao salvar representante:", err);
     }
   };
 
@@ -97,14 +116,12 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
     <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-0 md:p-4">
       <div className="w-full max-w-5xl h-full md:h-[95vh] flex flex-col relative animate-in fade-in zoom-in duration-300">
         
-        {/* Toolbar com botão de download priorizado */}
         <div className="flex justify-between items-center p-4 bg-slate-900 md:bg-transparent md:mb-4 shrink-0">
           <div className="flex items-center space-x-2 text-white/50 md:bg-white/5 md:px-4 md:py-2 rounded-full md:border border-white/10">
             <FileText size={16} className="text-[#BDB76B]" />
             <span className="text-[10px] font-black uppercase tracking-widest">Visualizando Orçamento</span>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Botão de Download Direto pelo Link do Banco */}
             {budget.pdfUrl && (
               <a 
                 href={budget.pdfUrl} 
@@ -125,7 +142,6 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
           </div>
         </div>
 
-        {/* Document Area */}
         <div className="flex-1 overflow-y-auto bg-slate-100 md:bg-slate-800/50 p-0 md:p-8 md:rounded-[2.5rem] md:border border-white/5 custom-scrollbar">
           <div className="bg-white w-full max-w-4xl min-h-full shadow-2xl md:rounded-[2.5rem] overflow-hidden text-slate-800 relative mx-auto border border-slate-100 flex flex-col">
             <div className="absolute top-0 left-0 w-2 h-full bg-[#BDB76B] hidden md:block"></div>
@@ -263,7 +279,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
               </div>
             </div>
             
-            <button onClick={() => setIsRepFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 flex items-center space-x-2 transition-all active:scale-95 text-sm">
+            <button onClick={handleOpenNewRep} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20 flex items-center space-x-2 transition-all active:scale-95 text-sm">
               <UserPlus size={18} />
               <span>Novo Contato</span>
             </button>
@@ -312,7 +328,6 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                     </div>
 
                     <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                      {/* Botão de Download Priorizado na Lista */}
                       {budget.pdfUrl && (
                         <a 
                           href={budget.pdfUrl} 
@@ -344,7 +359,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
               )}
             </div>
           </div>
-          {/* ... resto do componente ... */}
+          
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
               <h3 className="font-bold uppercase text-[10px] tracking-widest text-blue-600">Equipe Técnica Autorizada</h3>
@@ -354,10 +369,23 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                 <p className="text-slate-500 text-sm italic col-span-full">Nenhum contato cadastrado.</p>
               ) : (
                 representatives.map((rep) => (
-                  <div key={rep.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm relative">
-                    <button onClick={(e) => { e.stopPropagation(); setRepToDelete(rep.id); setIsConfirmOpen(true); }} className="absolute top-2 right-2 p-2 text-slate-200 hover:text-red-600 transition-all">
-                      <Trash2 size={14} />
-                    </button>
+                  <div key={rep.id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm relative group/rep">
+                    <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover/rep:opacity-100 transition-all">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleEditRep(rep); }} 
+                        className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setRepToDelete(rep.id); setIsConfirmOpen(true); }} 
+                        className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        title="Remover"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                     <div className="flex items-center space-x-3 mb-3">
                       <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs uppercase">{rep.representanteName.charAt(0)}</div>
                       <div>
@@ -406,7 +434,12 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
       </div>
 
       {selectedBudget && <BudgetPreviewModal budget={selectedBudget} onClose={() => setSelectedBudget(null)} />}
-      <RepresentativeForm isOpen={isRepFormOpen} onClose={() => setIsRepFormOpen(false)} onSubmit={handleAddRepresentative} />
+      <RepresentativeForm 
+        isOpen={isRepFormOpen} 
+        onClose={() => setIsRepFormOpen(false)} 
+        onSubmit={handleRepresentativeSubmit}
+        initialData={editingRepresentative}
+      />
       <ConfirmationDialog isOpen={isConfirmOpen} title="Remover Contato" message="Deseja remover este contato?" confirmLabel="Remover" onConfirm={handleConfirmDeleteRep} onCancel={() => setIsConfirmOpen(false)} />
       <ConfirmationDialog isOpen={isConfirmBudgetDeleteOpen} title="Excluir Orçamento" message="Ação irreversível." confirmLabel="Excluir" onConfirm={handleConfirmDeleteBudget} onCancel={() => setIsConfirmBudgetDeleteOpen(false)} />
     </div>
