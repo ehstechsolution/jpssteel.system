@@ -10,23 +10,37 @@ import { ClientForm } from './ClientForm';
 import { ClientDetails } from './ClientDetails';
 import { ConfirmationDialog } from './ConfirmationDialog';
 
-export const Clients: React.FC = () => {
+interface ClientsProps {
+  initialClientId?: string | null;
+  onClearRedirect?: () => void;
+}
+
+export const Clients: React.FC<ClientsProps> = ({ initialClientId, onClearRedirect }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   
-  // Estados para o diálogo de confirmação
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'cliente'), (snap) => {
-      setClients(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
+      const clientList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+      setClients(clientList);
+
+      // Auto-seleção se houver um redirecionamento pendente
+      if (initialClientId) {
+        const found = clientList.find(c => c.id === initialClientId);
+        if (found) {
+          setSelectedClient(found);
+          if (onClearRedirect) onClearRedirect();
+        }
+      }
     });
     return () => unsub();
-  }, []);
+  }, [initialClientId]);
 
   const handleFormSubmit = async (formData: any) => {
     try {

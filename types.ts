@@ -31,14 +31,16 @@ export interface NotificationSettings {
 
 export interface Service {
   id: string;
-  clientId: string;
-  clientName: string;
-  description: string;
-  status: 'Pendente' | 'Em Andamento' | 'Concluído' | 'Cancelado';
-  startDate: string;
-  endDate: string;
-  totalValue: number;
-  paymentStatus: 'Aberto' | 'Pago' | 'Atrasado';
+  orcRelacionado: string;
+  clienteRelacionado: string;
+  nomeCliente: string;
+  fotoCliente: string;
+  dataServico: string;
+  localServico: string;
+  valorServico: number;
+  statusServico: 'Aguardando início' | 'Em execução' | 'Concluido' | 'Cancelado' | 'Em análise';
+  descricao: string;
+  createdAt?: any;
 }
 
 export interface Movement {

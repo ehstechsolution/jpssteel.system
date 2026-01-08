@@ -1,272 +1,199 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Search, Calendar, CheckCircle2, Clock, AlertTriangle, Filter, MoreVertical, X, Wrench, Edit2
+  Plus, Search, Calendar, CheckCircle2, Clock, AlertTriangle, Filter, MoreVertical, X, Wrench, Edit2, MapPin, Trash2, ClipboardList
 } from 'lucide-react';
-import { collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Service, Client } from '../types';
+import { Service } from '../types';
+import { ServiceFormWidget } from './ServiceFormWidget';
+import { ConfirmationDialog } from './ConfirmationDialog';
 
 export const Services: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
-
-  const [formData, setFormData] = useState({
-    clientId: '',
-    description: '',
-    status: 'Pendente' as Service['status'],
-    startDate: '',
-    endDate: '',
-    totalValue: 0,
-    paymentStatus: 'Aberto' as Service['paymentStatus']
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Confirmação de Exclusão
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubServices = onSnapshot(collection(db, 'services'), (snap) => {
+    const q = query(collection(db, 'servico'), orderBy('createdAt', 'desc'));
+    const unsubServices = onSnapshot(q, (snap) => {
       setServices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
     });
-    const unsubClients = onSnapshot(collection(db, 'cliente'), (snap) => {
-      setClients(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
-    });
-    return () => { unsubServices(); unsubClients(); };
+    return () => unsubServices();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const client = clients.find(c => c.id === formData.clientId);
-    const data = {
-      ...formData,
-      clientName: client?.displayName || 'Cliente Desconhecido',
-      totalValue: Number(formData.totalValue),
-      updatedAt: serverTimestamp()
-    };
-
+  const handleDelete = async () => {
+    if (!serviceToDelete) return;
     try {
-      if (editingService) {
-        await updateDoc(doc(db, 'services', editingService.id), data);
-      } else {
-        await addDoc(collection(db, 'services'), data);
-      }
-      setIsModalOpen(false);
-      setEditingService(null);
-      setFormData({ clientId: '', description: '', status: 'Pendente', startDate: '', endDate: '', totalValue: 0, paymentStatus: 'Aberto' });
+      await deleteDoc(doc(db, 'servico', serviceToDelete));
+      setIsConfirmOpen(false);
+      setServiceToDelete(null);
     } catch (err) {
       console.error(err);
+      alert("Erro ao excluir serviço.");
     }
   };
 
-  const getStatusColor = (status: Service['status']) => {
+  const getStatusStyle = (status: Service['statusServico']) => {
     switch (status) {
-      case 'Concluído': return 'text-green-600 bg-green-50 border-green-200';
-      case 'Em Andamento': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'Cancelado': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-amber-600 bg-amber-50 border-amber-200';
+      case 'Concluido': return 'text-green-600 bg-green-50 border-green-100';
+      case 'Em execução': return 'text-blue-600 bg-blue-50 border-blue-100';
+      case 'Cancelado': return 'text-red-600 bg-red-50 border-red-100';
+      case 'Em análise': return 'text-purple-600 bg-purple-50 border-purple-100';
+      default: return 'text-amber-600 bg-amber-50 border-amber-100';
     }
   };
 
-  const getStatusIcon = (status: Service['status']) => {
-    switch (status) {
-      case 'Concluído': return <CheckCircle2 size={14} className="mr-1" />;
-      case 'Em Andamento': return <Clock size={14} className="mr-1" />;
-      case 'Cancelado': return <X size={14} className="mr-1" />;
-      default: return <AlertTriangle size={14} className="mr-1" />;
-    }
-  };
+  const filteredServices = services.filter(s => 
+    s.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.localServico.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Serviços</h1>
-          <p className="text-slate-500">Cronograma e gestão de projetos industriais.</p>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Gestão de Serviços</h1>
+          <p className="text-slate-500 text-sm font-medium">Cronograma operacional e controle de obras JPS Steel.</p>
         </div>
         <button 
           onClick={() => { setEditingService(null); setIsModalOpen(true); }}
-          className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-blue-900/20"
+          className="flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-black shadow-xl transition-all active:scale-95"
         >
-          <Plus size={20} />
-          <span>Novo Serviço</span>
+          <Plus size={20} strokeWidth={3} />
+          <span>NOVA ORDEM DE SERVIÇO</span>
         </button>
       </div>
 
+      <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex items-center space-x-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar por cliente, descrição ou local..." 
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-bold"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="hidden md:flex items-center space-x-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+           <span className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtros:</span>
+           {['Todos', 'Execução', 'Concluido'].map(f => (
+             <button key={f} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${f === 'Todos' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+               {f}
+             </button>
+           ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map((service) => (
-          <div key={service.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden group">
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-4">
-                <span className={`flex items-center px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(service.status)}`}>
-                  {getStatusIcon(service.status)}
-                  {service.status}
+        {filteredServices.map((service) => (
+          <div key={service.id} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all overflow-hidden group flex flex-col h-full">
+            <div className="p-8 flex-1 flex flex-col">
+              <div className="flex justify-between items-start mb-6">
+                <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(service.statusServico)}`}>
+                  {service.statusServico}
                 </span>
-                <button 
-                  onClick={() => {
-                    setEditingService(service);
-                    setFormData({
-                      clientId: service.clientId,
-                      description: service.description,
-                      status: service.status,
-                      startDate: service.startDate,
-                      endDate: service.endDate,
-                      totalValue: service.totalValue,
-                      paymentStatus: service.paymentStatus
-                    });
-                    setIsModalOpen(true);
-                  }}
-                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Edit2 size={16} />
-                </button>
+                <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => { setEditingService(service); setIsModalOpen(true); }}
+                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button 
+                    onClick={() => { setServiceToDelete(service.id); setIsConfirmOpen(true); }}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
               
-              <h3 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-blue-600 transition-colors">
-                {service.description}
-              </h3>
-              <p className="text-sm text-slate-500 font-medium mb-4">{service.clientName}</p>
-              
-              <div className="space-y-3 py-4 border-y border-slate-100 mb-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400 flex items-center">
-                    <Calendar size={14} className="mr-2" /> Início
-                  </span>
-                  <span className="text-slate-700 font-semibold">{new Date(service.startDate).toLocaleDateString('pt-BR')}</span>
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-50 shadow-sm flex-shrink-0">
+                  <img src={service.fotoCliente} alt={service.nomeCliente} className="w-full h-full object-cover" />
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400 flex items-center">
-                    <Clock size={14} className="mr-2" /> Previsão
-                  </span>
-                  <span className="text-slate-700 font-semibold">{new Date(service.endDate).toLocaleDateString('pt-BR')}</span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 truncate">Contratante</p>
+                  <h3 className="font-black text-slate-900 text-lg leading-tight truncate group-hover:text-blue-600 transition-colors">
+                    {service.nomeCliente}
+                  </h3>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Valor do Contrato</p>
-                  <p className="text-xl font-black text-slate-800">R$ {service.totalValue.toLocaleString('pt-BR')}</p>
+              <div className="space-y-4 mb-6 flex-1">
+                <div className="flex items-start">
+                  <MapPin size={14} className="text-slate-400 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-xs text-slate-500 font-bold leading-relaxed line-clamp-2">{service.localServico}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-lg text-xs font-bold ${service.paymentStatus === 'Pago' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
-                  {service.paymentStatus}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center">
+                    {/* Fix: Added ClipboardList to imports above */}
+                    <ClipboardList size={10} className="mr-1" /> Descrição Técnica
+                  </p>
+                  <p className="text-[11px] text-slate-600 font-medium leading-relaxed line-clamp-3 italic">
+                    {service.descricao}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">Data Agendada</p>
+                  <p className="text-xs font-black text-slate-800 flex items-center">
+                    <Calendar size={12} className="mr-1.5 text-blue-600" />
+                    {new Date(service.dataServico + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">Valor do Serviço</p>
+                  <p className="text-lg font-black text-slate-900 tracking-tighter">
+                    R$ {service.valorServico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         ))}
 
-        {services.length === 0 && (
-          <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-            <Wrench size={48} className="mb-4 opacity-20" />
-            <p>Nenhum serviço registrado ainda.</p>
+        {filteredServices.length === 0 && (
+          <div className="col-span-full py-24 flex flex-col items-center justify-center text-slate-400 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+              <Wrench size={40} className="opacity-20" />
+            </div>
+            <p className="font-black uppercase tracking-[0.2em] text-sm text-slate-300">Nenhum serviço em cronograma</p>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="mt-6 text-blue-600 font-black text-xs uppercase tracking-widest hover:underline"
+            >
+              Iniciar primeiro serviço agora
+            </button>
           </div>
         )}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 text-lg">
-                {editingService ? 'Editar Serviço' : 'Cadastrar Novo Serviço'}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={24} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Selecione o Cliente</label>
-                <select 
-                  required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
-                  value={formData.clientId}
-                  onChange={e => setFormData({...formData, clientId: e.target.value})}
-                >
-                  <option value="">Escolha um cliente...</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.displayName}</option>)}
-                </select>
-              </div>
+      <ServiceFormWidget 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={() => {}}
+        initialData={editingService}
+      />
 
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Descrição do Serviço</label>
-                <input 
-                  required 
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
-                  placeholder="Ex: Montagem de estrutura metálica Galpão A"
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Data de Início</label>
-                  <input 
-                    type="date" 
-                    required 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
-                    value={formData.startDate}
-                    onChange={e => setFormData({...formData, startDate: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Previsão Término</label>
-                  <input 
-                    type="date" 
-                    required 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
-                    value={formData.endDate}
-                    onChange={e => setFormData({...formData, endDate: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Status</label>
-                  <select 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 font-medium"
-                    value={formData.status}
-                    onChange={e => setFormData({...formData, status: e.target.value as Service['status']})}
-                  >
-                    <option value="Pendente">Pendente</option>
-                    <option value="Em Andamento">Em Andamento</option>
-                    <option value="Concluído">Concluído</option>
-                    <option value="Cancelado">Cancelado</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Valor Total (R$)</label>
-                  <input 
-                    type="number" 
-                    required 
-                    step="0.01"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-slate-900"
-                    placeholder="0,00"
-                    value={formData.totalValue}
-                    onChange={e => setFormData({...formData, totalValue: Number(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex justify-end space-x-3">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2.5 text-slate-600 font-semibold hover:bg-slate-100 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all"
-                >
-                  Salvar Serviço
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ConfirmationDialog 
+        isOpen={isConfirmOpen}
+        title="Excluir Ordem de Serviço"
+        message="Deseja realmente remover este serviço do sistema? Esta ação é irreversível."
+        confirmLabel="Excluir"
+        onConfirm={handleDelete}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </div>
   );
 };
