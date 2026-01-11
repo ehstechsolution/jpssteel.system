@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { 
-  ArrowUpRight, ArrowDownRight, Search, Eye, Edit2, Trash2, FileText, X, Tag, Calendar, Users, Info
+  ArrowUpRight, ArrowDownRight, Search, Eye, Edit2, Trash2, FileText, X, Tag, Calendar, Users, Info, Repeat
 } from 'lucide-react';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -80,7 +80,7 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vencimento</p>
                 <p className="text-lg font-black text-slate-900">
-                  {new Date(movement.vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                  {new Date(movement.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </p>
               </div>
             </div>
@@ -97,7 +97,14 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
                   <div className="p-2 bg-slate-100 rounded-lg text-slate-400"><FileText size={16} /></div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição</p>
-                    <p className="text-sm font-bold text-slate-800 leading-relaxed">{movement.descricao}</p>
+                    <p className="text-sm font-bold text-slate-800 leading-relaxed">
+                      {movement.descricao}
+                      {movement.parcelaAtual && (
+                        <span className="ml-2 inline-flex items-center text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[10px] font-black">
+                          <Repeat size={10} className="mr-1" /> Parcela {movement.parcelaAtual}/{movement.totalParcelas}
+                        </span>
+                      )}
+                    </p>
                   </div>
                </div>
                <div className="flex items-start space-x-3">
@@ -115,8 +122,8 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
                )}
             </div>
 
-            <button onClick={onClose} className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all">
-              FECHAR DETALHES
+            <button onClick={onClose} className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest text-xs">
+              Fechar Detalhes
             </button>
           </div>
         </div>
@@ -162,7 +169,7 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
                         {mov.tipo === 'Entrada' ? <ArrowUpRight size={14} strokeWidth={3} /> : <ArrowDownRight size={14} strokeWidth={3} />}
                       </div>
                       <span className="text-xs font-black text-slate-800">
-                        {new Date(mov.vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        {new Date(mov.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                       </span>
                     </div>
                   </td>
@@ -173,7 +180,9 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
                     </p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">{mov.descricao}</p>
+                    <div className="flex items-center space-x-2">
+                      <p className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">{mov.descricao}</p>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${

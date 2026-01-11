@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, ArrowUpRight, ArrowDownRight, Users, ArrowRight, Loader2, Tag, Calendar, DollarSign } from 'lucide-react';
+import { X, ArrowUpRight, ArrowDownRight, Users, ArrowRight, Loader2, Tag, Calendar, DollarSign, Repeat } from 'lucide-react';
 import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Client, Movement } from '../types';
@@ -15,6 +15,8 @@ interface MovementFormWidgetProps {
 export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, onClose, onSuccess, initialData }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isRecorrente, setIsRecorrente] = useState(false);
+  const [qtdParcelas, setQtdParcelas] = useState(2);
   
   const [formData, setFormData] = useState({
     tipo: 'Entrada' as 'Entrada' | 'Saída',
@@ -45,16 +47,25 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
         observacao: initialData.observacao || '',
         idRelacionado: initialData.idRelacionado || ''
       });
+      setIsRecorrente(false);
     } else {
       setFormData({
         tipo: 'Entrada', categoria: '', descricao: '', valor: '',
         status: 'Pendente', vencimento: new Date().toISOString().split('T')[0],
         observacao: '', idRelacionado: ''
       });
+      setIsRecorrente(false);
+      setQtdParcelas(2);
     }
 
     return () => unsub();
   }, [isOpen, initialData]);
+
+  const addMonths = (dateStr: string, months: number) => {
+    const date = new Date(dateStr + 'T12:00:00');
+    date.setMonth(date.getMonth() + months);
+    return date.toISOString().split('T')[0];
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,31 +76,60 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
 
     setLoading(true);
     try {
-      const payload = {
-        tipo: formData.tipo,
-        categoria: formData.categoria,
-        descricao: formData.descricao,
-        valor: Number(formData.valor),
-        status: formData.status,
-        vencimento: formData.vencimento,
-        observacao: formData.observacao,
-        idRelacionado: formData.idRelacionado,
-        updatedAt: serverTimestamp()
-      };
-      
       if (initialData?.id) {
+        // Apenas Edição Simples (não altera recorrência de já existentes por segurança)
+        const payload = {
+          tipo: formData.tipo,
+          categoria: formData.categoria,
+          descricao: formData.descricao,
+          valor: Number(formData.valor),
+          status: formData.status,
+          vencimento: formData.vencimento,
+          observacao: formData.observacao,
+          idRelacionado: formData.idRelacionado,
+          updatedAt: serverTimestamp()
+        };
         await updateDoc(doc(db, 'financeiro', initialData.id), payload);
         onClose();
       } else {
-        await addDoc(collection(db, 'financeiro'), { ...payload, createdAt: serverTimestamp() });
+        // Novo Lançamento
+        if (isRecorrente && qtdParcelas > 1) {
+          // Loop para criar as parcelas
+          for (let i = 1; i <= qtdParcelas; i++) {
+            const vencimentoParcela = addMonths(formData.vencimento, i - 1);
+            const descricaoComParcela = `${formData.descricao} (${i}/${qtdParcelas})`;
+            
+            await addDoc(collection(db, 'financeiro'), {
+              tipo: formData.tipo,
+              categoria: formData.categoria,
+              descricao: descricaoComParcela,
+              valor: Number(formData.valor),
+              status: formData.status,
+              vencimento: vencimentoParcela,
+              observacao: formData.observacao,
+              idRelacionado: formData.idRelacionado,
+              parcelaAtual: i,
+              totalParcelas: qtdParcelas,
+              createdAt: serverTimestamp()
+            });
+          }
+        } else {
+          // Lançamento Único
+          await addDoc(collection(db, 'financeiro'), {
+            tipo: formData.tipo,
+            categoria: formData.categoria,
+            descricao: formData.descricao,
+            valor: Number(formData.valor),
+            status: formData.status,
+            vencimento: formData.vencimento,
+            observacao: formData.observacao,
+            idRelacionado: formData.idRelacionado,
+            createdAt: serverTimestamp()
+          });
+        }
         onSuccess(formData.tipo);
       }
-      
-      setFormData({
-        tipo: 'Entrada', categoria: '', descricao: '', valor: '',
-        status: 'Pendente', vencimento: new Date().toISOString().split('T')[0],
-        observacao: '', idRelacionado: ''
-      });
+      onClose();
     } catch (err) {
       console.error("Erro ao salvar financeiro:", err);
       alert("Falha ao registrar movimentação.");
@@ -103,7 +143,7 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
-        <div className="px-8 py-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+        <div className="px-8 py-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center text-black">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-slate-900 rounded-xl">
               <DollarSign size={20} className="text-white" />
@@ -156,7 +196,7 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
             </div>
 
             <div className="md:col-span-3 relative">
-              <label className="absolute -top-2 left-4 px-1 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Vencimento *</label>
+              <label className="absolute -top-2 left-4 px-1 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Vencimento (1ª Parc) *</label>
               <input 
                 type="date" 
                 required
@@ -166,6 +206,44 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
               />
             </div>
           </div>
+
+          {!initialData && (
+            <div className="bg-slate-50 p-4 rounded-3xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 rounded-xl ${isRecorrente ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                  <Repeat size={18} />
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Lançamento Recorrente?</h4>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase">Gere parcelas automáticas mensais</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                 <button 
+                  type="button"
+                  onClick={() => setIsRecorrente(!isRecorrente)}
+                  className={`w-12 h-6 rounded-full transition-all relative ${isRecorrente ? 'bg-blue-600' : 'bg-slate-300'}`}
+                 >
+                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isRecorrente ? 'left-7' : 'left-1'}`}></div>
+                 </button>
+                 
+                 {isRecorrente && (
+                   <div className="flex items-center space-x-2 animate-in slide-in-from-right-2">
+                     <span className="text-[9px] font-black text-slate-500 uppercase">Qtd Meses:</span>
+                     <input 
+                      type="number" 
+                      min="2" 
+                      max="48"
+                      className="w-16 p-2 bg-white border border-slate-200 rounded-xl font-black text-black text-center text-sm outline-none"
+                      value={qtdParcelas}
+                      onChange={e => setQtdParcelas(Number(e.target.value))}
+                     />
+                   </div>
+                 )}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1.5">
@@ -237,12 +315,14 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
             <button 
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-2xl shadow-xl transition-all flex items-center justify-center space-x-3 active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-2xl shadow-xl transition-all flex items-center justify-center space-x-3 active:scale-[0.98] disabled:opacity-50 group"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : (
                 <>
-                  <span className="uppercase tracking-widest text-xs">{initialData ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR LANÇAMENTO NO CAIXA'}</span>
-                  <ArrowRight size={18} strokeWidth={3} />
+                  <span className="uppercase tracking-widest text-xs">
+                    {initialData ? 'SALVAR ALTERAÇÕES' : (isRecorrente ? `GERAR ${qtdParcelas} PARCELAS` : 'FINALIZAR LANÇAMENTO NO CAIXA')}
+                  </span>
+                  <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>

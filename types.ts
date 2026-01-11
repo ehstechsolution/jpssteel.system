@@ -53,6 +53,8 @@ export interface Movement {
   vencimento: string;
   observacao: string;
   idRelacionado: string;
+  parcelaAtual?: number;
+  totalParcelas?: number;
   createdAt?: any;
 }
 
