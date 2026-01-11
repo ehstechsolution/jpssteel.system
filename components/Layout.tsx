@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Tag,
   DollarSign,
-  FileSearch
+  FileSearch,
+  Lock
 } from 'lucide-react';
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -42,19 +43,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
   const USER_AVATAR = "https://i.ibb.co/LdxXv1CF/empresa-Oliginal.png";
 
   useEffect(() => {
-    // 1. Carregar Configurações de Notificação
     const unsubSettings = onSnapshot(doc(db, 'settings', 'notifications'), (snap) => {
       if (snap.exists()) {
         setNotifSettings(snap.data() as NotificationSettings);
       }
     });
 
-    // 2. Carregar Clientes para os Detalhes
     const unsubClients = onSnapshot(collection(db, 'cliente'), (snap) => {
       setClients(snap.docs.map(d => ({ id: d.id, ...d.data() } as Client)));
     });
 
-    // 3. Fechar dropdown ao clicar fora
     const handleClickOutside = (event: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setIsNotifOpen(false);
@@ -103,10 +101,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
     { id: Page.Services, label: 'Serviços', icon: Wrench },
     { id: Page.Budget, label: 'Orçamentos', icon: FileText },
     { id: Page.Movements, label: 'Movimentações', icon: ArrowLeftRight },
+    { id: Page.Passwords, label: 'Senhas', icon: Lock },
     { id: Page.Settings, label: 'Configurações', icon: SettingsIcon },
   ];
 
-  // Modal de Detalhes Interno para Notificações
   const DetailsModal = ({ movement, onClose }: { movement: Movement, onClose: () => void }) => {
     const client = clients.find(c => c.id === movement.idRelacionado);
     return (
@@ -170,7 +168,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col w-72 bg-slate-900 text-white sticky top-0 h-screen shadow-2xl z-40">
         <div className="p-8 flex flex-col items-center">
           <div className="w-full flex justify-center bg-white/5 p-4 rounded-2xl border border-white/10 mb-4">
@@ -202,7 +199,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
         </div>
       </aside>
 
-      {/* Mobile Sidebar */}
       <aside className={`lg:hidden fixed top-0 bottom-0 left-0 w-72 bg-slate-900 text-white z-50 transform transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 flex justify-between items-center border-b border-white/5">
           <img src={APP_LOGO} alt="JPS Steel Logo" className="h-10" />
@@ -229,9 +225,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
         </nav>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* TopBar Premium */}
         <header className="h-20 lg:h-24 bg-white/70 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-30 shadow-sm transition-all">
           <div className="flex items-center lg:hidden">
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2.5 bg-slate-100 rounded-xl text-slate-600 mr-4">
@@ -251,7 +245,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
           </div>
 
           <div className="flex items-center space-x-6">
-            {/* Notificações Widget */}
             <div className="relative" ref={notifRef}>
               <button 
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -265,7 +258,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
                 )}
               </button>
 
-              {/* Notificações Dropdown */}
               {isNotifOpen && (
                 <div className="absolute right-0 mt-4 w-80 sm:w-96 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 ring-4 ring-slate-900/5">
                   <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
@@ -331,7 +323,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
               )}
             </div>
 
-            {/* Perfil Admin Premium */}
             <div className="flex items-center space-x-4 pl-6 border-l border-slate-200">
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-black text-slate-900 uppercase tracking-tighter leading-none">Diretoria</p>
@@ -352,7 +343,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
         </div>
       </main>
 
-      {/* Modal de Detalhes vindo da Notificação */}
       {selectedNotifDetail && (
         <DetailsModal 
           movement={selectedNotifDetail} 

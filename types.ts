@@ -56,11 +56,21 @@ export interface Movement {
   createdAt?: any;
 }
 
+export interface Credential {
+  id: string;
+  titulo: string;
+  usuario: string;
+  senha: string;
+  categoria: string;
+  createdAt?: any;
+}
+
 export enum Page {
   Dashboard = 'dashboard',
   Clients = 'clients',
   Services = 'services',
   Budget = 'budget',
   Movements = 'movements',
+  Passwords = 'passwords',
   Settings = 'settings'
 }
