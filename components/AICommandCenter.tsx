@@ -23,6 +23,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     if (!input.trim() || isProcessing) return;
 
     setIsProcessing(true);
+    // Initialize AI right before the call as per best practices
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const todayStr = new Date().toLocaleDateString('pt-BR');
 
@@ -71,8 +72,9 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     }];
 
     try {
+      // Use gemini-3-pro-preview for advanced reasoning and tool interaction
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3-pro-preview',
         contents: input,
         config: { 
           tools,
@@ -150,9 +152,10 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     - Serviços Agendados: ${filteredServices.length > 0 ? filteredServices.map(s => `Cliente: ${s.nomeCliente} (Data do Serviço: ${s.dataServico})`).join('; ') : 'Nenhum serviço agendado.'}
     - Movimentações Financeiras Pendentes: ${filteredMovements.length > 0 ? filteredMovements.map(m => `Descrição: ${m.descricao} (VALOR: R$ ${m.valor}, VENCIMENTO: ${m.vencimento})`).join('; ') : 'Nenhum vencimento pendente no período.'}`;
 
+    // Initialize AI for generating the final agenda text
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const finalResp = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: `Contexto dos dados do sistema: ${summary}. Pergunta do usuário: "${input}". 
       Por favor, liste os itens com suas respectivas datas e valores de forma bem organizada.`
     });
@@ -188,8 +191,9 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     
     Dê um panorama geral e cite 2 pontos de atenção baseados nestes números.`;
 
+    // Initialize AI for financial summary analysis
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
+    const response = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: prompt });
 
     setResponseContent({
       title: "Análise Financeira",
