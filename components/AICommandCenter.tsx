@@ -23,11 +23,10 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     if (!input.trim() || isProcessing) return;
 
     setIsProcessing(true);
-    // Initialize AI right before the call as per best practices
+    // Initialize AI right before the call
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const todayStr = new Date().toLocaleDateString('pt-BR');
 
-    // Definição expandida de funções para a IA
     const tools = [{
       functionDeclarations: [
         {
@@ -72,16 +71,16 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     }];
 
     try {
-      // Use gemini-3-pro-preview for advanced reasoning and tool interaction
+      // Usando gemini-3-flash-preview pois tem cotas gratuitas mais flexíveis que o Pro
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: input,
         config: { 
           tools,
           systemInstruction: `Você é o Assistente Executivo da JPS Steel - Montagens Industriais. 
           Hoje é dia ${todayStr}.
           Sua missão é facilitar a gestão estratégica e operacional. 
-          - Você tem acesso aos dados financeiros (entradas/saídas) e operacionais (serviços).
+          - Você tem acesso aos dados financeiros (entradas/saídas) e operacionais (servisços).
           - Quando o usuário perguntar "O que tem pra essa semana?" ou "quais os vencimentos?", você DEVE usar a ferramenta getAgenda.
           - No banco de dados, a data de vencimento das contas está no campo 'vencimento' (formato YYYY-MM-DD).
           - Seja ultra-específico: cite nomes de clientes, valores em R$ e as datas exatas.
@@ -93,7 +92,6 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
       const call = response.functionCalls?.[0];
 
       if (!call) {
-        // Resposta Conversacional Geral
         setResponseContent({
           title: "Assistente JPS",
           text: response.text || "Estou à disposição para ajudar com a gestão da JPS Steel.",
@@ -101,7 +99,6 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
         });
         setShowResponseModal(true);
       } else {
-        // Processamento de Function Calling
         switch (call.name) {
           case 'processPayment':
             const { clientName, amount } = call.args as any;
@@ -125,7 +122,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
       setInput('');
     } catch (error) {
       console.error("Erro na IA:", error);
-      alert("Erro ao processar comando IA.");
+      alert("A IA está com alta demanda ou limite de cota atingido. Tente novamente em alguns segundos.");
     } finally {
       setIsProcessing(false);
     }
@@ -149,15 +146,13 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     });
 
     const summary = `Agenda detalhada para ${period}:
-    - Serviços Agendados: ${filteredServices.length > 0 ? filteredServices.map(s => `Cliente: ${s.nomeCliente} (Data do Serviço: ${s.dataServico})`).join('; ') : 'Nenhum serviço agendado.'}
-    - Movimentações Financeiras Pendentes: ${filteredMovements.length > 0 ? filteredMovements.map(m => `Descrição: ${m.descricao} (VALOR: R$ ${m.valor}, VENCIMENTO: ${m.vencimento})`).join('; ') : 'Nenhum vencimento pendente no período.'}`;
+    - Serviços Agendados: ${filteredServices.length > 0 ? filteredServices.map(s => `Cliente: ${s.nomeCliente} (Data: ${s.dataServico})`).join('; ') : 'Nenhum serviço.'}
+    - Movimentações Pendentes: ${filteredMovements.length > 0 ? filteredMovements.map(m => `Descrição: ${m.descricao} (R$ ${m.valor}, Venc: ${m.vencimento})`).join('; ') : 'Nada pendente.'}`;
 
-    // Initialize AI for generating the final agenda text
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const finalResp = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: `Contexto dos dados do sistema: ${summary}. Pergunta do usuário: "${input}". 
-      Por favor, liste os itens com suas respectivas datas e valores de forma bem organizada.`
+      model: 'gemini-3-flash-preview',
+      contents: `Contexto: ${summary}. Pergunta: "${input}". Organize os itens de forma clara.`
     });
 
     setResponseContent({
@@ -171,10 +166,10 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
   const handleClientInfoLogic = async (name: string) => {
     const client = clients.find(c => c.displayName.toLowerCase().includes(name.toLowerCase()));
     if (!client) {
-      setResponseContent({ title: "Busca de Cliente", text: `Não encontrei nenhum cliente com o nome "${name}" em nossa base.`, type: 'info' });
+      setResponseContent({ title: "Busca de Cliente", text: `Não encontrei nenhum cliente com o nome "${name}".`, type: 'info' });
     } else {
       const clientServices = services.filter(s => s.clienteRelacionado === client.id);
-      const text = `Cliente: ${client.displayName}\nCNPJ: ${client.cnpj}\nEndereço: ${client.endereco}\nServiços realizados: ${clientServices.length}\nStatus: Ativo no sistema JPS.`;
+      const text = `Cliente: ${client.displayName}\nCNPJ: ${client.cnpj}\nEndereço: ${client.endereco}\nServiços realizados: ${clientServices.length}\nStatus: Ativo.`;
       setResponseContent({ title: "Ficha do Cliente", text, type: 'info' });
     }
     setShowResponseModal(true);
@@ -184,16 +179,9 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     const totalIn = movements.filter(m => m.tipo === 'Entrada' && m.status !== 'Cancelado').reduce((acc, curr) => acc + curr.valor, 0);
     const totalOut = movements.filter(m => m.tipo === 'Saída' && m.status !== 'Cancelado').reduce((acc, curr) => acc + curr.valor, 0);
     
-    const prompt = `Dados Financeiros JPS Steel:
-    Entradas Totais: R$ ${totalIn}
-    Saídas Totais: R$ ${totalOut}
-    Saldo Líquido: R$ ${totalIn - totalOut}
-    
-    Dê um panorama geral e cite 2 pontos de atenção baseados nestes números.`;
-
-    // Initialize AI for financial summary analysis
+    const prompt = `Financeiro JPS: Entradas R$ ${totalIn}, Saídas R$ ${totalOut}, Saldo R$ ${totalIn - totalOut}. Dê um breve panorama.`;
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: prompt });
+    const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
 
     setResponseContent({
       title: "Análise Financeira",
@@ -244,11 +232,9 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
         </div>
       </form>
 
-      {/* Modal de Resposta da IA com Ajuste de Scroll e Altura */}
       {showResponseModal && responseContent && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[200] flex items-center justify-center p-4 overflow-hidden">
           <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 border border-white/20 flex flex-col">
-            {/* Header Fixo */}
             <div className="p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
                <div className="flex items-center space-x-3">
                   <div className={`p-3 rounded-2xl ${
@@ -268,7 +254,6 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
                </button>
             </div>
 
-            {/* Body com Scroll Interno */}
             <div className="p-8 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
                <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 min-h-[120px]">
                   <p className="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap">
@@ -277,7 +262,6 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
                </div>
             </div>
 
-            {/* Footer Fixo */}
             <div className="p-8 pt-2 bg-white shrink-0">
                <button 
                 onClick={() => setShowResponseModal(false)}
