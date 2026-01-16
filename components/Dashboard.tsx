@@ -16,6 +16,7 @@ import {
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Client, Service, Movement } from '../types';
+import { AICommandCenter } from './AICommandCenter';
 
 export const Dashboard: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -27,7 +28,7 @@ export const Dashboard: React.FC = () => {
       setClients(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
     });
     
-    const unsubServices = onSnapshot(collection(db, 'services'), (snap) => {
+    const unsubServices = onSnapshot(collection(db, 'servico'), (snap) => {
       setServices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
     });
 
@@ -51,10 +52,10 @@ export const Dashboard: React.FC = () => {
     // Total Clientes
     const totalClients = clients.length;
 
-    // Serviços Ativos (Pendente ou Em Andamento)
-    const activeServices = services.filter(s => s.status === 'Em Andamento' || s.status === 'Pendente').length;
+    // Serviços Ativos
+    const activeServices = services.filter(s => s.statusServico === 'Em execução' || s.statusServico === 'Aguardando início').length;
 
-    // Faturamento Mês (Soma das Entradas no mês atual que não estão canceladas/arquivadas)
+    // Faturamento Mês
     const monthlyRevenue = movements
       .filter(m => {
         if (m.tipo !== 'Entrada' || m.status === 'Cancelado' || m.status === 'Arquivado') return false;
@@ -63,7 +64,7 @@ export const Dashboard: React.FC = () => {
       })
       .reduce((acc, curr) => acc + curr.valor, 0);
 
-    // Valor Total das Movimentações Pendentes (Independente do mês)
+    // Valor Total das Movimentações Pendentes
     const pendingTotal = movements
       .filter(m => m.status === 'Pendente')
       .reduce((acc, curr) => acc + curr.valor, 0);
@@ -112,7 +113,7 @@ export const Dashboard: React.FC = () => {
     return last6Months;
   }, [movements]);
 
-  // 3. Próximas Movimentações (5 próximas a partir de hoje)
+  // 3. Próximas Movimentações
   const upcomingMovements = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0];
     return movements
@@ -129,6 +130,9 @@ export const Dashboard: React.FC = () => {
           <p className="text-slate-500 text-sm font-medium">Acompanhamento consolidado da JPS Steel.</p>
         </div>
       </div>
+
+      {/* AI CommandCenter INTEGRATION WITH FULL CONTEXT */}
+      <AICommandCenter clients={clients} movements={movements} services={services} />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

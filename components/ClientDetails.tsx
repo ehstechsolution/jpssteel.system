@@ -32,7 +32,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
   const [isConfirmBudgetDeleteOpen, setIsConfirmBudgetDeleteOpen] = useState(false);
   const [budgetIdToDelete, setBudgetIdToDelete] = useState<string | null>(null);
 
-  const APP_LOGO = "https://i.ibb.co/PZDD4Dfh/logo.png";
+  const APP_LOGO = "https://res.cloudinary.com/dcp9d15n4/image/upload/v1768585071/logo_f7a8go.png";
 
   useEffect(() => {
     const qReps = query(

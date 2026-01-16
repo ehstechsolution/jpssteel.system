@@ -39,7 +39,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
   const [selectedNotifDetail, setSelectedNotifDetail] = useState<Movement | null>(null);
   
   const notifRef = useRef<HTMLDivElement>(null);
-  const APP_LOGO = "https://i.ibb.co/PZDD4Dfh/logo.png";
+  const APP_LOGO = "https://res.cloudinary.com/dcp9d15n4/image/upload/v1768585071/logo_f7a8go.png";
   const USER_AVATAR = "https://i.ibb.co/LdxXv1CF/empresa-Oliginal.png";
 
   useEffect(() => {

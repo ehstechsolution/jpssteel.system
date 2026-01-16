@@ -33,7 +33,7 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
 
   const [valorGlobal, setValorGlobal] = useState(0);
 
-  const APP_LOGO = "https://i.ibb.co/PZDD4Dfh/logo.png";
+  const APP_LOGO = "https://res.cloudinary.com/dcp9d15n4/image/upload/v1768585071/logo_f7a8go.png";
   const ICONE_ORC = "https://i.ibb.co/FbCJhRsZ/icone-Orcamento-Trans-JPS.png";
   const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxdL_oevnH0HA5hgtZF9mWBbiAMGq_aRwB_4LpdnU6SE3iIQDjfkTkJN9OSLteh410Dww/exec";
 
@@ -290,23 +290,6 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
 
   return (
     <div className="space-y-6">
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          #printable-budget, #printable-budget * { visibility: visible; }
-          #printable-budget { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            margin: 0 !important;
-            border: none !important;
-          }
-        }
-      `}</style>
-
       <div className="flex flex-col sm:flex-row justify-between items-center no-print gap-4">
         <h1 className="text-xl md:text-2xl font-black text-slate-800">Orçamentação Inteligente</h1>
         <div className="flex flex-wrap justify-center gap-2">
