@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sparkles, Loader2, Send, BrainCircuit, X, TrendingUp, TrendingDown, Wallet, AlertCircle, Calendar, Wrench, Users } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -23,8 +22,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     if (!input.trim() || isProcessing) return;
 
     setIsProcessing(true);
-    // Initialize AI right before the call
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const todayStr = new Date().toLocaleDateString('pt-BR');
 
     const tools = [{
@@ -71,7 +69,9 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     }];
 
     try {
-      // Usando gemini-3-flash-preview pois tem cotas gratuitas mais flexíveis que o Pro
+      // Create instance with the key from process.env
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: input,
@@ -120,9 +120,14 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
         }
       }
       setInput('');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro na IA:", error);
-      alert("A IA está com alta demanda ou limite de cota atingido. Tente novamente em alguns segundos.");
+      const errorMsg = error?.message || "";
+      if (errorMsg.includes("429") || errorMsg.includes("quota")) {
+        alert("Limite de uso da IA atingido. Tente novamente em alguns segundos.");
+      } else {
+        alert("Ocorreu um erro ao processar seu comando. Verifique sua conexão ou tente novamente.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -149,7 +154,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     - Serviços Agendados: ${filteredServices.length > 0 ? filteredServices.map(s => `Cliente: ${s.nomeCliente} (Data: ${s.dataServico})`).join('; ') : 'Nenhum serviço.'}
     - Movimentações Pendentes: ${filteredMovements.length > 0 ? filteredMovements.map(m => `Descrição: ${m.descricao} (R$ ${m.valor}, Venc: ${m.vencimento})`).join('; ') : 'Nada pendente.'}`;
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const finalResp = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Contexto: ${summary}. Pergunta: "${input}". Organize os itens de forma clara.`
@@ -180,7 +185,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     const totalOut = movements.filter(m => m.tipo === 'Saída' && m.status !== 'Cancelado').reduce((acc, curr) => acc + curr.valor, 0);
     
     const prompt = `Financeiro JPS: Entradas R$ ${totalIn}, Saídas R$ ${totalOut}, Saldo R$ ${totalIn - totalOut}. Dê um breve panorama.`;
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
 
     setResponseContent({

@@ -1,13 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, ArrowUpRight, ArrowDownRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownRight, AlertTriangle, CheckCircle2, History } from 'lucide-react';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Movement, Client } from '../types';
 import { MovementFormWidget } from './MovementFormWidget';
 import { MovementListWidget } from './MovementListWidget';
 
-export const InventoryMovements: React.FC = () => {
+interface InventoryMovementsProps {
+  onNavigateToAll?: () => void;
+}
+
+export const InventoryMovements: React.FC<InventoryMovementsProps> = ({ onNavigateToAll }) => {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -16,14 +20,11 @@ export const InventoryMovements: React.FC = () => {
   const [lastType, setLastType] = useState<'Entrada' | 'Saída'>('Entrada');
 
   useEffect(() => {
-    // Escutar Financeiro
     const unsubMovements = onSnapshot(collection(db, 'financeiro'), (snap) => {
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Movement));
-      // Ordenação secundária pela data de criação se necessário
       setMovements(data);
     });
 
-    // Escutar Clientes
     const unsubClients = onSnapshot(collection(db, 'cliente'), (snap) => {
       setClients(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
     });
@@ -83,13 +84,22 @@ export const InventoryMovements: React.FC = () => {
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">Fluxo Financeiro Profissional</h1>
           <p className="text-slate-500 text-sm">Acompanhamento consolidado de caixa JPS Steel.</p>
         </div>
-        <button 
-          onClick={handleOpenNew}
-          className="flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-black shadow-xl transition-all active:scale-95"
-        >
-          <Plus size={20} strokeWidth={3} />
-          <span>NOVA MOVIMENTAÇÃO</span>
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button 
+            onClick={onNavigateToAll}
+            className="flex items-center justify-center space-x-2 bg-white border-2 border-slate-200 text-slate-600 px-6 py-3.5 rounded-2xl font-black shadow-sm transition-all hover:bg-slate-50 active:scale-95"
+          >
+            <History size={18} />
+            <span>HISTÓRICO COMPLETO</span>
+          </button>
+          <button 
+            onClick={handleOpenNew}
+            className="flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-black shadow-xl transition-all active:scale-95"
+          >
+            <Plus size={20} strokeWidth={3} />
+            <span>NOVA MOVIMENTAÇÃO</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

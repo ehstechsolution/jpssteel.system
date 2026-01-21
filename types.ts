@@ -73,6 +73,7 @@ export enum Page {
   Services = 'services',
   Budget = 'budget',
   Movements = 'movements',
+  AllMovements = 'all_movements',
   Passwords = 'passwords',
   Settings = 'settings'
 }

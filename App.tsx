@@ -6,6 +6,7 @@ import { Clients } from './components/Clients';
 import { Services } from './components/Services';
 import { BudgetCalculator } from './components/BudgetCalculator';
 import { InventoryMovements } from './components/InventoryMovements';
+import { AllMovementsList } from './components/AllMovementsList';
 import { Passwords } from './components/Passwords';
 import { Settings } from './components/Settings';
 import { Page } from './types';
@@ -69,7 +70,9 @@ const App: React.FC = () => {
       case Page.Budget:
         return <BudgetCalculator onFinish={handleBudgetFinish} />;
       case Page.Movements:
-        return <InventoryMovements />;
+        return <InventoryMovements onNavigateToAll={() => setCurrentPage(Page.AllMovements)} />;
+      case Page.AllMovements:
+        return <AllMovementsList onBack={() => setCurrentPage(Page.Movements)} />;
       case Page.Passwords:
         return <Passwords />;
       case Page.Settings:
