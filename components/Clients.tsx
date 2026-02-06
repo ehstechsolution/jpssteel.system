@@ -13,9 +13,10 @@ import { ConfirmationDialog } from './ConfirmationDialog';
 interface ClientsProps {
   initialClientId?: string | null;
   onClearRedirect?: () => void;
+  onCloneBudget?: (budget: any) => void;
 }
 
-export const Clients: React.FC<ClientsProps> = ({ initialClientId, onClearRedirect }) => {
+export const Clients: React.FC<ClientsProps> = ({ initialClientId, onClearRedirect, onCloneBudget }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,6 +94,7 @@ export const Clients: React.FC<ClientsProps> = ({ initialClientId, onClearRedire
       <ClientDetails 
         client={selectedClient} 
         onBack={() => setSelectedClient(null)} 
+        onCloneBudget={onCloneBudget}
       />
     );
   }

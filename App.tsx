@@ -15,6 +15,7 @@ import { Lock, ShieldAlert, Loader2 } from 'lucide-react';
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Dashboard);
   const [redirectClientId, setRedirectClientId] = useState<string | null>(null);
+  const [budgetToClone, setBudgetToClone] = useState<any>(null);
   
   // PIN Protection State
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
@@ -23,6 +24,7 @@ const App: React.FC = () => {
   const REQUIRED_PIN = "101222";
 
   const handleBudgetFinish = (clientId: string) => {
+    setBudgetToClone(null);
     setRedirectClientId(clientId);
     setCurrentPage(Page.Clients);
   };
@@ -32,6 +34,7 @@ const App: React.FC = () => {
       setIsPinModalOpen(true);
       setPinInput('');
     } else {
+      if (page !== Page.Budget) setBudgetToClone(null);
       setCurrentPage(page);
     }
   };
@@ -63,12 +66,16 @@ const App: React.FC = () => {
           <Clients 
             initialClientId={redirectClientId} 
             onClearRedirect={() => setRedirectClientId(null)} 
+            onCloneBudget={(data) => {
+              setBudgetToClone(data);
+              setCurrentPage(Page.Budget);
+            }}
           />
         );
       case Page.Services:
         return <Services />;
       case Page.Budget:
-        return <BudgetCalculator onFinish={handleBudgetFinish} />;
+        return <BudgetCalculator initialData={budgetToClone} onFinish={handleBudgetFinish} />;
       case Page.Movements:
         return <InventoryMovements onNavigateToAll={() => setCurrentPage(Page.AllMovements)} />;
       case Page.AllMovements:

@@ -4,7 +4,7 @@ import {
   ArrowLeft, Building2, MapPin, FileText, Briefcase, 
   UserPlus, Phone, Mail, Users, Trash2, Calendar, Eye, X, 
   MapPin as MapPinIcon, Phone as PhoneIcon, Globe as GlobeIcon, FileDown,
-  Edit2
+  Edit2, Copy
 } from 'lucide-react';
 import { 
   collection, addDoc, onSnapshot, query, orderBy, 
@@ -18,9 +18,10 @@ import { ConfirmationDialog } from './ConfirmationDialog';
 interface ClientDetailsProps {
   client: Client;
   onBack: () => void;
+  onCloneBudget?: (budget: any) => void;
 }
 
-export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) => {
+export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack, onCloneBudget }) => {
   const [representatives, setRepresentatives] = useState<Representative[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [isRepFormOpen, setIsRepFormOpen] = useState(false);
@@ -345,6 +346,13 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack }) 
                         title="Visualizar"
                       >
                         <Eye size={18} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onCloneBudget?.(budget); }} 
+                        className="p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                        title="Alterar (Novo a partir deste)"
+                      >
+                        <Copy size={18} />
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setBudgetIdToDelete(budget.id); setIsConfirmBudgetDeleteOpen(true); }} 

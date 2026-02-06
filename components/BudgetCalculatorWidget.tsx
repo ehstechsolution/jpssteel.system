@@ -8,11 +8,12 @@ import { db } from '../firebase';
 import { DefaultValues } from '../types';
 
 interface BudgetCalculatorWidgetProps {
+  initialTotal?: number;
   onTotalUpdate: (total: number) => void;
   onFinish: () => void;
 }
 
-export const BudgetCalculatorWidget: React.FC<BudgetCalculatorWidgetProps> = ({ onTotalUpdate, onFinish }) => {
+export const BudgetCalculatorWidget: React.FC<BudgetCalculatorWidgetProps> = ({ initialTotal, onTotalUpdate, onFinish }) => {
   // Variáveis da Calculadora
   const [horasHhmm, setHorasHhmm] = useState('08:00');
   const [qtdFuncionarios, setQtdFuncionarios] = useState(1);
@@ -53,6 +54,11 @@ export const BudgetCalculatorWidget: React.FC<BudgetCalculatorWidgetProps> = ({ 
 
   // Lógica de Cálculo Principal
   useEffect(() => {
+    // Se for um valor inicial (clonado), não sobrescrevemos até o usuário mexer nos inputs
+    // mas o useEffect vai rodar e recalcular baseado nos estados iniciais acima.
+    // Para clonar o VALOR FINAL sem ter as horas salvas, deixamos o ajuste compensar ou
+    // simplesmente notificamos o valor.
+    
     const hDecimal = timeToDecimal(horasHhmm);
     
     // 1. Valor do Dia
@@ -80,9 +86,18 @@ export const BudgetCalculatorWidget: React.FC<BudgetCalculatorWidgetProps> = ({ 
     if (ajusteTipo === 'Acréscimo') final += alteracao;
     if (ajusteTipo === 'Desconto') final -= alteracao;
 
-    setValorGlobal(final);
-    onTotalUpdate(final);
-  }, [horasHhmm, qtdFuncionarios, valorHora, qtdDias, valorGasolina, valorPedagio, valorAlimentacao, ajusteTipo, ajusteModo, ajusteValor]);
+    // Se temos um total inicial de clonagem e os inputs ainda estão nos valores "padrão",
+    // podemos forçar o valorGlobal inicial.
+    const isDefaultState = horasHhmm === '08:00' && qtdFuncionarios === 1 && qtdDias === 1 && ajusteTipo === 'Nenhum';
+    
+    if (initialTotal && isDefaultState && valorGlobal === 0) {
+      setValorGlobal(initialTotal);
+      onTotalUpdate(initialTotal);
+    } else {
+      setValorGlobal(final);
+      onTotalUpdate(final);
+    }
+  }, [horasHhmm, qtdFuncionarios, valorHora, qtdDias, valorGasolina, valorPedagio, valorAlimentacao, ajusteTipo, ajusteModo, ajusteValor, initialTotal]);
 
   return (
     <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden border border-white/5 h-full">

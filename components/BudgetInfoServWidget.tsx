@@ -10,10 +10,16 @@ interface InfoServData {
 }
 
 interface BudgetInfoServWidgetProps {
+  initialData?: {
+    servicosDesc: string;
+    porContaJps: string[];
+    porContaContratante: string[];
+    prazoEntrega: string;
+  };
   onChange: (data: InfoServData) => void;
 }
 
-export const BudgetInfoServWidget: React.FC<BudgetInfoServWidgetProps> = ({ onChange }) => {
+export const BudgetInfoServWidget: React.FC<BudgetInfoServWidgetProps> = ({ initialData, onChange }) => {
   const [servicosDesc, setServicosDesc] = useState('Valor de M.O. de 1 soldador, 1 caldeireiro para religação das tubulações de gás.');
   const [porContaJps, setPorContaJps] = useState(['EPIS', 'Transporte', 'Ferramentas', 'Materiais de consumo']);
   const [porContaContratante, setPorContaContratante] = useState(['Ponto de energia e água', 'Andaimes/Plataforma elevatória']);
@@ -21,6 +27,16 @@ export const BudgetInfoServWidget: React.FC<BudgetInfoServWidgetProps> = ({ onCh
 
   const [newItemJps, setNewItemJps] = useState('');
   const [newItemContratante, setNewItemContratante] = useState('');
+
+  // Sincronizar com initialData (clonagem)
+  useEffect(() => {
+    if (initialData) {
+      setServicosDesc(initialData.servicosDesc);
+      setPorContaJps(initialData.porContaJps);
+      setPorContaContratante(initialData.porContaContratante);
+      setPrazoEntrega(initialData.prazoEntrega);
+    }
+  }, [initialData?.servicosDesc]);
 
   // Notificar pai sobre mudanças
   useEffect(() => {

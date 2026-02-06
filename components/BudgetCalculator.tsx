@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Save, ArrowLeft, Eye, MapPin, Phone, Globe, Loader2, FileDown
 } from 'lucide-react';
@@ -11,9 +11,10 @@ import { BudgetInfoServWidget } from './BudgetInfoServWidget';
 
 interface BudgetCalculatorProps {
   onFinish?: (clientId: string) => void;
+  initialData?: any;
 }
 
-export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) => {
+export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish, initialData }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -37,23 +38,26 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
   const ICONE_ORC = "https://i.ibb.co/FbCJhRsZ/icone-Orcamento-Trans-JPS.png";
   const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxdL_oevnH0HA5hgtZF9mWBbiAMGq_aRwB_4LpdnU6SE3iIQDjfkTkJN9OSLteh410Dww/exec";
 
-  const findOrCreateOrcamento = async () => {
-    const q = query(
-      collection(db, 'orcamento'),
-      where('idContratante', '==', budgetInfo.clientId),
-      where('valorGlobal', '==', valorGlobal),
-      where('prazo', '==', budgetInfo.prazoEntrega),
-      where('responsavelOrc', '==', budgetInfo.responsavel)
-    );
-
-    const querySnapshot = await getDocs(q);
-    
-    if (!querySnapshot.empty) {
-      const existingId = querySnapshot.docs[0].id;
-      await updateDoc(doc(db, 'orcamento', existingId), { iconeOrc: ICONE_ORC });
-      return existingId;
+  // Preencher dados caso venha de uma "clonagem/alteração"
+  useEffect(() => {
+    if (initialData) {
+      setBudgetInfo({
+        clientId: initialData.idContratante || '',
+        clientName: initialData.clienteOrc || '',
+        responsavel: initialData.responsavelOrc || '',
+        departamento: initialData.departamentoOrc || '',
+        servicosDesc: initialData.descricaoOrc || '',
+        referencia: initialData.referenciaOrc || 'Prestação de serviços de montagem e manutenção industrial.',
+        objetivo: 'Esta proposta tem o objetivo de atender a solicitação para manutenção industrial.',
+        porContaJps: initialData.contaJPS || [],
+        porContaContratante: initialData.contaContratante || [],
+        prazoEntrega: initialData.prazo || ''
+      });
+      setValorGlobal(initialData.valorGlobal || 0);
     }
+  }, [initialData]);
 
+  const findOrCreateOrcamento = async () => {
     const today = new Date().toISOString().split('T')[0];
     const orcamentoData = {
       createdAt: serverTimestamp(),
@@ -125,7 +129,6 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
         body: JSON.stringify(payload)
       });
 
-      // Captura e tenta processar a resposta para extrair o link do PDF
       const resultText = await response.text();
       let capturedPdfUrl = "";
       
@@ -137,7 +140,6 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
           capturedPdfUrl = resultJson.link;
         }
       } catch (e) {
-        // Se não for JSON, verifica se o texto é um link puro
         if (resultText.trim().startsWith("http")) {
           capturedPdfUrl = resultText.trim();
         }
@@ -339,8 +341,23 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
       {!showPreview ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 no-print pb-20">
           <div className="lg:col-span-5 space-y-6">
-            <BudgetIdentificationWidget onChange={(data) => setBudgetInfo(prev => ({ ...prev, ...data }))} />
-            <BudgetInfoServWidget onChange={(data) => setBudgetInfo(prev => ({ ...prev, ...data }))} />
+            <BudgetIdentificationWidget 
+              initialData={{
+                clientId: budgetInfo.clientId,
+                responsavel: budgetInfo.responsavel,
+                departamento: budgetInfo.departamento
+              }}
+              onChange={(data) => setBudgetInfo(prev => ({ ...prev, ...data }))} 
+            />
+            <BudgetInfoServWidget 
+              initialData={{
+                servicosDesc: budgetInfo.servicosDesc,
+                porContaJps: budgetInfo.porContaJps,
+                porContaContratante: budgetInfo.porContaContratante,
+                prazoEntrega: budgetInfo.prazoEntrega
+              }}
+              onChange={(data) => setBudgetInfo(prev => ({ ...prev, ...data }))} 
+            />
             <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-4">
               <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em]">Detalhes Adicionais</h3>
               <div className="space-y-3">
@@ -352,7 +369,7 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish }) 
             </div>
           </div>
           <div className="lg:col-span-7">
-            <BudgetCalculatorWidget onTotalUpdate={(total) => setValorGlobal(total)} onFinish={() => {}} />
+            <BudgetCalculatorWidget initialTotal={valorGlobal} onTotalUpdate={(total) => setValorGlobal(total)} onFinish={() => {}} />
           </div>
         </div>
       ) : (

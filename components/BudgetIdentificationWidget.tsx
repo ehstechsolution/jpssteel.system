@@ -13,10 +13,15 @@ interface IdentificationData {
 }
 
 interface BudgetIdentificationWidgetProps {
+  initialData?: {
+    clientId: string;
+    responsavel: string;
+    departamento: string;
+  };
   onChange: (data: IdentificationData) => void;
 }
 
-export const BudgetIdentificationWidget: React.FC<BudgetIdentificationWidgetProps> = ({ onChange }) => {
+export const BudgetIdentificationWidget: React.FC<BudgetIdentificationWidgetProps> = ({ initialData, onChange }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [representatives, setRepresentatives] = useState<Representative[]>([]);
   const [loadingReps, setLoadingReps] = useState(false);
@@ -25,6 +30,15 @@ export const BudgetIdentificationWidget: React.FC<BudgetIdentificationWidgetProp
   const [selectedClientId, setSelectedClientId] = useState('');
   const [responsavel, setResponsavel] = useState('');
   const [departamento, setDepartamento] = useState('');
+
+  // Sincronizar com initialData (clonagem)
+  useEffect(() => {
+    if (initialData) {
+      setSelectedClientId(initialData.clientId);
+      setResponsavel(initialData.responsavel);
+      setDepartamento(initialData.departamento);
+    }
+  }, [initialData?.clientId]);
 
   // Carregar lista de clientes ao montar
   useEffect(() => {
@@ -38,8 +52,11 @@ export const BudgetIdentificationWidget: React.FC<BudgetIdentificationWidgetProp
   useEffect(() => {
     if (!selectedClientId) {
       setRepresentatives([]);
-      setResponsavel('');
-      setDepartamento('');
+      // Apenas limpa se não for clonagem inicial
+      if (!initialData) {
+        setResponsavel('');
+        setDepartamento('');
+      }
       return;
     }
 
@@ -54,8 +71,8 @@ export const BudgetIdentificationWidget: React.FC<BudgetIdentificationWidgetProp
       setRepresentatives(reps);
       setLoadingReps(false);
       
-      // Se houver representantes, seleciona o primeiro por padrão
-      if (reps.length > 0 && !responsavel) {
+      // Se houver representantes e não for clonagem, seleciona o primeiro por padrão
+      if (reps.length > 0 && !responsavel && !initialData) {
         handleRepChange(reps[0].representanteName, reps);
       }
     });
@@ -115,7 +132,7 @@ export const BudgetIdentificationWidget: React.FC<BudgetIdentificationWidgetProp
               {loadingReps && <Loader2 size={10} className="ml-2 animate-spin text-blue-600" />}
             </label>
             <select 
-              disabled={!selectedClientId || representatives.length === 0}
+              disabled={!selectedClientId || (representatives.length === 0 && !initialData)}
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-black text-black focus:ring-2 focus:ring-blue-500/20 outline-none transition-all disabled:opacity-50"
               value={responsavel} 
               onChange={e => handleRepChange(e.target.value)}
