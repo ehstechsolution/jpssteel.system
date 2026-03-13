@@ -8,6 +8,7 @@ import { db } from '../firebase';
 import { BudgetCalculatorWidget } from './BudgetCalculatorWidget';
 import { BudgetIdentificationWidget } from './BudgetIdentificationWidget';
 import { BudgetInfoServWidget } from './BudgetInfoServWidget';
+import { formatMovementDate } from '../utils/dateUtils';
 
 interface BudgetCalculatorProps {
   onFinish?: (clientId: string) => void;
@@ -266,7 +267,7 @@ export const BudgetCalculator: React.FC<BudgetCalculatorProps> = ({ onFinish, in
                <div className="space-y-1">
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo de Entrega</p>
                  <p className="text-sm font-black text-blue-800 bg-blue-50 px-4 py-2 rounded-xl inline-block border border-blue-100">
-                   {budgetInfo.prazoEntrega ? new Date(budgetInfo.prazoEntrega + 'T00:00:00').toLocaleDateString('pt-BR') : 'A combinar'}
+                   {budgetInfo.prazoEntrega ? formatMovementDate(budgetInfo.prazoEntrega) : 'A combinar'}
                  </p>
                </div>
                <div className="pt-6">

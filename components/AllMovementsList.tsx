@@ -6,6 +6,7 @@ import {
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Movement, Client } from '../types';
+import { formatMovementDate } from '../utils/dateUtils';
 
 interface AllMovementsListProps {
   onBack: () => void;
@@ -37,15 +38,6 @@ export const AllMovementsList: React.FC<AllMovementsListProps> = ({ onBack }) =>
     (m.descricao || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (m.categoria || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const formatMovementDate = (dateStr: string) => {
-    if (!dateStr) return '---';
-    try {
-      return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR');
-    } catch (e) {
-      return '---';
-    }
-  };
 
   const DetailsModal = ({ movement, onClose }: { movement: Movement, onClose: () => void }) => {
     const client = clients.find(c => c.id === movement.idRelacionado);

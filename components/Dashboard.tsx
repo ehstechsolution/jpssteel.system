@@ -17,6 +17,7 @@ import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestor
 import { db } from '../firebase';
 import { Client, Service, Movement } from '../types';
 import { AICommandCenter } from './AICommandCenter';
+import { parseMovementDate, formatMovementDate } from '../utils/dateUtils';
 
 export const Dashboard: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -59,8 +60,8 @@ export const Dashboard: React.FC = () => {
     const monthlyRevenue = movements
       .filter(m => {
         if (m.tipo !== 'Entrada' || m.status === 'Cancelado' || m.status === 'Arquivado') return false;
-        const vDate = new Date(m.vencimento + 'T12:00:00');
-        return vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
+        const vDate = parseMovementDate(m.vencimento);
+        return vDate && vDate.getMonth() === currentMonth && vDate.getFullYear() === currentYear;
       })
       .reduce((acc, curr) => acc + curr.valor, 0);
 
@@ -91,16 +92,16 @@ export const Dashboard: React.FC = () => {
       const revenue = movements
         .filter(mov => {
           if (mov.tipo !== 'Entrada' || mov.status === 'Cancelado' || mov.status === 'Arquivado') return false;
-          const vDate = new Date(mov.vencimento + 'T12:00:00');
-          return vDate.getMonth() === m && vDate.getFullYear() === y;
+          const vDate = parseMovementDate(mov.vencimento);
+          return vDate && vDate.getMonth() === m && vDate.getFullYear() === y;
         })
         .reduce((acc, curr) => acc + curr.valor, 0);
 
       const costs = movements
         .filter(mov => {
           if (mov.tipo !== 'Saída' || mov.status === 'Cancelado' || mov.status === 'Arquivado') return false;
-          const vDate = new Date(mov.vencimento + 'T12:00:00');
-          return vDate.getMonth() === m && vDate.getFullYear() === y;
+          const vDate = parseMovementDate(mov.vencimento);
+          return vDate && vDate.getMonth() === m && vDate.getFullYear() === y;
         })
         .reduce((acc, curr) => acc + curr.valor, 0);
 
@@ -115,10 +116,20 @@ export const Dashboard: React.FC = () => {
 
   // 3. Próximas Movimentações
   const upcomingMovements = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     return movements
-      .filter(m => m.vencimento >= todayStr && m.status !== 'Arquivado' && m.status !== 'Cancelado')
-      .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
+      .filter(m => {
+        if (m.status === 'Arquivado' || m.status === 'Cancelado') return false;
+        const vDate = parseMovementDate(m.vencimento);
+        return vDate && vDate >= today;
+      })
+      .sort((a, b) => {
+        const dA = parseMovementDate(a.vencimento)?.getTime() || 0;
+        const dB = parseMovementDate(b.vencimento)?.getTime() || 0;
+        return dA - dB;
+      })
       .slice(0, 5);
   }, [movements]);
 
@@ -241,7 +252,7 @@ export const Dashboard: React.FC = () => {
                       <p className="text-xs font-black text-slate-800 line-clamp-1">{mov.descricao}</p>
                       <div className="flex items-center mt-0.5">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                          {new Date(mov.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                          {formatMovementDate(mov.vencimento)}
                         </span>
                       </div>
                     </div>

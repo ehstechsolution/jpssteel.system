@@ -4,6 +4,7 @@ import { X, Wrench, ArrowRight, Loader2, Calendar, MapPin, DollarSign, FileText,
 import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Service, Client } from '../types';
+import { formatMovementDate } from '../utils/dateUtils';
 
 interface ServiceFormWidgetProps {
   isOpen: boolean;
@@ -165,7 +166,7 @@ export const ServiceFormWidget: React.FC<ServiceFormWidgetProps> = ({ isOpen, on
               <option value="">Selecione um orçamento aprovado...</option>
               {budgets.map(b => (
                 <option key={b.id} value={b.id}>
-                  {b.clienteOrc} - R$ {b.valorGlobal?.toLocaleString('pt-BR')} ({new Date(b.dataProposta).toLocaleDateString('pt-BR')})
+                  {b.clienteOrc} - R$ {b.valorGlobal?.toLocaleString('pt-BR')} ({formatMovementDate(b.dataProposta)})
                 </option>
               ))}
             </select>

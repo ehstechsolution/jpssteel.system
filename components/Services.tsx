@@ -8,6 +8,7 @@ import { db } from '../firebase';
 import { Service } from '../types';
 import { ServiceFormWidget } from './ServiceFormWidget';
 import { ConfirmationDialog } from './ConfirmationDialog';
+import { formatMovementDate } from '../utils/dateUtils';
 
 export const Services: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -149,7 +150,7 @@ export const Services: React.FC = () => {
                   <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1">Data Agendada</p>
                   <p className="text-xs font-black text-slate-800 flex items-center">
                     <Calendar size={12} className="mr-1.5 text-blue-600" />
-                    {new Date(service.dataServico + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    {formatMovementDate(service.dataServico)}
                   </p>
                 </div>
                 <div className="text-right">

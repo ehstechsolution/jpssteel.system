@@ -14,6 +14,7 @@ import { db } from '../firebase';
 import { Client, Representative } from '../types';
 import { RepresentativeForm } from './RepresentativeForm';
 import { ConfirmationDialog } from './ConfirmationDialog';
+import { formatMovementDate } from '../utils/dateUtils';
 
 interface ClientDetailsProps {
   client: Client;
@@ -51,7 +52,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack, on
     
     const unsubBudgets = onSnapshot(qBudgets, (snap) => {
       const budgetData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      budgetData.sort((a, b) => {
+      budgetData.sort((a: any, b: any) => {
         const dateA = a.createdAt?.seconds || 0;
         const dateB = b.createdAt?.seconds || 0;
         return dateB - dateA;
@@ -225,7 +226,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack, on
                 <div className="space-y-1 text-center md:text-left">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo de Entrega</p>
                   <p className="text-sm font-black text-blue-800 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 inline-block">
-                    {budget.prazo ? new Date(budget.prazo + 'T00:00:00').toLocaleDateString('pt-BR') : 'A combinar'}
+                    {budget.prazo ? formatMovementDate(budget.prazo) : 'A combinar'}
                   </p>
                 </div>
                 <div className="text-center md:text-right w-full md:w-auto">
@@ -319,7 +320,7 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client, onBack, on
                         </p>
                         <div className="flex items-center space-x-2 mt-1">
                           <span className="text-[9px] font-bold text-slate-400 uppercase">
-                            {new Date(budget.dataProposta).toLocaleDateString('pt-BR')}
+                            {formatMovementDate(budget.dataProposta)}
                           </span>
                           <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-700">
                             {budget.status}

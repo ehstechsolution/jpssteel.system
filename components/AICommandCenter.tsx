@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2, Send, BrainCircuit, X, TrendingUp, TrendingDown, Wallet, AlertCircle, Calendar, Wrench, Users } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration, Tool } from "@google/genai";
 import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Client, Movement, Service } from '../types';
+import { parseMovementDate, formatMovementDate } from '../utils/dateUtils';
 
 interface AICommandCenterProps {
   clients: Client[];
@@ -25,7 +26,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     
     const todayStr = new Date().toLocaleDateString('pt-BR');
 
-    const tools = [{
+    const tools: Tool[] = [{
       functionDeclarations: [
         {
           name: 'processPayment',
@@ -65,7 +66,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
             required: ['name']
           }
         }
-      ]
+      ] as FunctionDeclaration[]
     }];
 
     try {
@@ -141,18 +142,18 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({ clients, movem
     else end.setHours(23, 59, 59);
 
     const filteredServices = services.filter(s => {
-      const d = new Date(s.dataServico + 'T12:00:00');
-      return d >= today && d <= end;
+      const d = parseMovementDate(s.dataServico);
+      return d && d >= today && d <= end;
     });
 
     const filteredMovements = movements.filter(m => {
-      const d = new Date(m.vencimento + 'T12:00:00');
-      return d >= today && d <= end && m.status === 'Pendente';
+      const d = parseMovementDate(m.vencimento);
+      return d && d >= today && d <= end && m.status === 'Pendente';
     });
 
     const summary = `Agenda detalhada para ${period}:
-    - Serviços Agendados: ${filteredServices.length > 0 ? filteredServices.map(s => `Cliente: ${s.nomeCliente} (Data: ${s.dataServico})`).join('; ') : 'Nenhum serviço.'}
-    - Movimentações Pendentes: ${filteredMovements.length > 0 ? filteredMovements.map(m => `Descrição: ${m.descricao} (R$ ${m.valor}, Venc: ${m.vencimento})`).join('; ') : 'Nada pendente.'}`;
+    - Serviços Agendados: ${filteredServices.length > 0 ? filteredServices.map(s => `Cliente: ${s.nomeCliente} (Data: ${formatMovementDate(s.dataServico)})`).join('; ') : 'Nenhum serviço.'}
+    - Movimentações Pendentes: ${filteredMovements.length > 0 ? filteredMovements.map(m => `Descrição: ${m.descricao} (R$ ${m.valor}, Venc: ${formatMovementDate(m.vencimento)})`).join('; ') : 'Nada pendente.'}`;
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
     const finalResp = await ai.models.generateContent({

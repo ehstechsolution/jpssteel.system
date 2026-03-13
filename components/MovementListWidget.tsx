@@ -7,6 +7,7 @@ import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Movement, Client } from '../types';
 import { ConfirmationDialog } from './ConfirmationDialog';
+import { formatMovementDate, parseMovementDate } from '../utils/dateUtils';
 
 interface MovementListWidgetProps {
   movements: Movement[];
@@ -29,7 +30,8 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
       if (m.status === 'Arquivado') return false;
       
       // 2. Ocultar Cancelados vencidos (data anterior a hoje)
-      if (m.status === 'Cancelado' && m.vencimento < todayStr) return false;
+      const vDate = parseMovementDate(m.vencimento);
+      if (m.status === 'Cancelado' && vDate && vDate < new Date(todayStr + 'T00:00:00')) return false;
       
       // 3. Busca por Termo
       const matchesSearch = 
@@ -40,7 +42,9 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
     })
     .sort((a, b) => {
       // Ordenação: Do mais próximo para o mais distante (Ascendente)
-      return new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime();
+      const dA = parseMovementDate(a.vencimento)?.getTime() || 0;
+      const dB = parseMovementDate(b.vencimento)?.getTime() || 0;
+      return dA - dB;
     });
 
   const handleDelete = async () => {
@@ -80,7 +84,7 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vencimento</p>
                 <p className="text-lg font-black text-slate-900">
-                  {new Date(movement.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  {formatMovementDate(movement.vencimento)}
                 </p>
               </div>
             </div>
@@ -169,7 +173,7 @@ export const MovementListWidget: React.FC<MovementListWidgetProps> = ({ movement
                         {mov.tipo === 'Entrada' ? <ArrowUpRight size={14} strokeWidth={3} /> : <ArrowDownRight size={14} strokeWidth={3} />}
                       </div>
                       <span className="text-xs font-black text-slate-800">
-                        {new Date(mov.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        {formatMovementDate(mov.vencimento)}
                       </span>
                     </div>
                   </td>

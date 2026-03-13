@@ -4,6 +4,7 @@ import { X, ArrowUpRight, ArrowDownRight, Users, ArrowRight, Loader2, Tag, Calen
 import { collection, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Client, Movement } from '../types';
+import { parseMovementDate } from '../utils/dateUtils';
 
 interface MovementFormWidgetProps {
   isOpen: boolean;
@@ -62,7 +63,8 @@ export const MovementFormWidget: React.FC<MovementFormWidgetProps> = ({ isOpen, 
   }, [isOpen, initialData]);
 
   const addMonths = (dateStr: string, months: number) => {
-    const date = new Date(dateStr + 'T12:00:00');
+    const date = parseMovementDate(dateStr);
+    if (!date) return new Date().toISOString().split('T')[0];
     date.setMonth(date.getMonth() + months);
     return date.toISOString().split('T')[0];
   };

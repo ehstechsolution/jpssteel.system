@@ -23,6 +23,7 @@ import {
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Page, Movement, NotificationSettings, Client } from '../types';
+import { formatMovementDate, parseMovementDate } from '../utils/dateUtils';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -85,9 +86,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
 
       const filtered = allMovements.filter(m => {
         if (m.status !== 'Pendente') return false;
-        const dueDate = new Date(m.vencimento + 'T12:00:00');
-        return dueDate >= today && dueDate <= limitDate;
-      }).sort((a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime());
+        const dueDate = parseMovementDate(m.vencimento);
+        return dueDate && dueDate >= today && dueDate <= limitDate;
+      }).sort((a, b) => {
+        const dA = parseMovementDate(a.vencimento)?.getTime() || 0;
+        const dB = parseMovementDate(b.vencimento)?.getTime() || 0;
+        return dA - dB;
+      });
 
       setPendingMovements(filtered);
     });
@@ -130,7 +135,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vencimento</p>
                 <p className="text-lg font-black text-slate-900">
-                  {new Date(movement.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  {formatMovementDate(movement.vencimento)}
                 </p>
               </div>
             </div>
@@ -296,7 +301,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
                               <div className="flex justify-between items-start mb-1">
                                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest truncate">{mov.categoria}</p>
                                 <span className="text-[10px] font-black text-slate-400">
-                                  {new Date(mov.vencimento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                  {formatMovementDate(mov.vencimento)}
                                 </span>
                               </div>
                               <p className="text-xs font-bold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">{mov.descricao}</p>

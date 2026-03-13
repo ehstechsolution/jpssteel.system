@@ -28,24 +28,27 @@ export const BudgetInfoServWidget: React.FC<BudgetInfoServWidgetProps> = ({ init
   const [newItemJps, setNewItemJps] = useState('');
   const [newItemContratante, setNewItemContratante] = useState('');
 
-  // Sincronizar com initialData (clonagem)
+  // Sincronizar com initialData (clonagem) - Apenas se houver mudança real
   useEffect(() => {
     if (initialData) {
-      setServicosDesc(initialData.servicosDesc);
-      setPorContaJps(initialData.porContaJps);
-      setPorContaContratante(initialData.porContaContratante);
-      setPrazoEntrega(initialData.prazoEntrega);
+      if (initialData.servicosDesc !== servicosDesc) setServicosDesc(initialData.servicosDesc);
+      if (JSON.stringify(initialData.porContaJps) !== JSON.stringify(porContaJps)) setPorContaJps(initialData.porContaJps);
+      if (JSON.stringify(initialData.porContaContratante) !== JSON.stringify(porContaContratante)) setPorContaContratante(initialData.porContaContratante);
+      if (initialData.prazoEntrega !== prazoEntrega) setPrazoEntrega(initialData.prazoEntrega);
     }
-  }, [initialData?.servicosDesc]);
+  }, [initialData]);
 
-  // Notificar pai sobre mudanças
+  // Notificar pai sobre mudanças - Apenas se houver mudança real para evitar loops
   useEffect(() => {
-    onChange({
-      servicosDesc,
-      porContaJps,
-      porContaContratante,
-      prazoEntrega
-    });
+    const timeoutId = setTimeout(() => {
+      onChange({
+        servicosDesc,
+        porContaJps,
+        porContaContratante,
+        prazoEntrega
+      });
+    }, 100);
+    return () => clearTimeout(timeoutId);
   }, [servicosDesc, porContaJps, porContaContratante, prazoEntrega]);
 
   const addItem = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string, setInput: React.Dispatch<React.SetStateAction<string>>) => {
